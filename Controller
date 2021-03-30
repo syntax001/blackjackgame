@@ -1,0 +1,363 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.lang.Math;
+import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+
+public class Controller {
+    boolean hasSomeoneWon = false;
+    double playerCoins = 10000;
+    int playerBet = 0;
+    double playerBetDouble = 0;
+    int cardsLeftCounter = 51;
+    int numOfPlayerCards = 0;
+    int numOfDealerCards = 0;
+    ArrayList<String> nameOfCard = new ArrayList<String>();
+    String[] nametemp = new String[] {"2 of Clubs","2 of Spades","2 of Diamonds","2 of Hearts","3 of Clubs",
+            "3 of Spades","3 of Diamonds","3 of Hearts","4 of Clubs","4 of Spades","4 of Diamonds","4 of Hearts",
+            "5 of Clubs","5 of Spades","5 of Diamonds","5 of Hearts","6 of Clubs","6 of Spades","6 of Diamonds",
+            "6 of Hearts","7 of Clubs","7 of Spades","7 of Diamonds","7 of Hearts","8 of Clubs","8 of Spades",
+            "8 of Diamonds","8 of Hearts","9 of Clubs","9 of Spades","9 of Diamonds","9 of Hearts","10 of Clubs",
+            "10 of Spades","10 of Diamonds","10 of Hearts","Jack of Clubs","Jack of Spades","Jack of Diamonds",
+            "Jack of Hearts","Queen of Clubs","Queen of Spades","Queen of Diamonds","Queen of Hearts","King of Clubs",
+            "King of Spades","King of Diamonds","King of Hearts","Ace of Clubs","Ace of Spades","Ace of Diamonds",
+            "Ace of Hearts"};
+    Integer[] templist = new Integer[] {2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11};
+    ArrayList deckNums = new ArrayList();
+    ArrayList<Integer> playerHand = new ArrayList(5);
+    ArrayList<Integer> dealerHand = new ArrayList(5);
+
+        public void createDeck () {
+            spacer();
+            System.out.println("-----DECK HAS BEEN SHUFFLED-----");
+            spacer();
+            deckNums.clear();
+            nameOfCard.clear();
+            cardsLeftCounter = 51;
+            deckNums.addAll(Arrays.asList(templist));
+            nameOfCard.addAll(Arrays.asList(nametemp));
+        }
+        public void playBlackjack () {
+            createDeck();
+            boolean keepGoing = true;
+            while(keepGoing) {
+                if(cardsLeftCounter < 10) {
+                    createDeck();
+                }
+                if(doesPlayerHaveEnough() == false) {
+                    System.out.println("You don't have enough coins to bet... Its best we stop now.");
+                    System.exit(0);
+                }
+                betAmount();
+                spacer();
+                pause(1);
+                dealCardToPlayer();
+                pause(2);
+                dealCardToDealer();
+                pause(2);
+                dealCardToPlayer();
+                pause(2);
+                dealCardToDealer();
+                pause(1);
+                spacer();
+                if(getPlayerSum() > 21) {
+                    checkIfPlayerHasAce();
+                }
+                if(getDealerSum() > 21) {
+                    checkIfDealerHasAce();
+                }
+                doesAnyoneHaveBlackjack();
+                if (hasSomeoneWon == false) {
+                    getUserAction();
+                }
+                if (hasSomeoneWon == false) {
+                    dealersTurn();
+                }
+                pause(2);
+                System.out.println("Do you want to play again? Y/N");
+                Scanner playAgain = new Scanner(System.in);
+                String playAgainAnswer = playAgain.nextLine();
+                if(playAgainAnswer.equals("y")) {
+                    keepGoing = true;
+                    hasSomeoneWon = false;
+                    playerHand.clear();
+                    dealerHand.clear();
+                    numOfDealerCards = 0;
+                    numOfPlayerCards = 0;
+                    playerBet = 0;
+                    playerBetDouble = 0;
+                } else {
+                    System.out.println("Thanks for playing, see you next time.");
+                    keepGoing = false;
+                }
+            }
+        }
+
+        public void dealCardToPlayer () {
+            double randomDouble = Math.random() * cardsLeftCounter + 1;
+            int randomInt = (int) randomDouble;
+            System.out.println("Dealer has dealt --" + nameOfCard.get(randomInt) + "-- to the Player!");
+            playerHand.add((Integer) deckNums.get(randomInt));
+            numOfPlayerCards++;
+            cardsLeftCounter--;
+            nameOfCard.remove(randomInt);
+            deckNums.remove(randomInt);
+        }
+
+        public void dealCardToDealer () {
+            double randomDouble = Math.random() * cardsLeftCounter + 1;
+            int randomInt = (int) randomDouble;
+            System.out.println("Dealer has dealt --" + nameOfCard.get(randomInt) + "-- to the Dealer!");
+            dealerHand.add((Integer) deckNums.get(randomInt));
+            numOfDealerCards++;
+            cardsLeftCounter--;
+            nameOfCard.remove(randomInt);
+            deckNums.remove(randomInt);
+        }
+
+        public void getUserAction () {
+            int runThreeTimes = 0;
+            Scanner userInput = new Scanner(System.in);
+            String playerAnswer = "";
+            while (runThreeTimes <= 3) {
+                if (numOfPlayerCards == 5 && getPlayerSum() < 21) {
+                    System.out.println("You've won by the 5-card-rule!");
+                    playerWins();
+                    hasSomeoneWon = true;
+                }
+                System.out.println("Your hand has a value of: " + getPlayerSum());
+                pause(1);
+                System.out.println("The Dealers hand has a value of: " + getDealerSum());
+                pause(1);
+                System.out.println("Do you wish to Hit, Stand or Double? (Press h/s/d)");
+
+                playerAnswer = userInput.nextLine();
+
+                if (playerAnswer.equals("h") || playerAnswer.equals("d")) {
+                    if(playerAnswer.equals("d")) {
+                        if(playerCoins < playerBet*2) {
+                            pause(1);
+                            System.out.println("You dont have enough money to double your bet...");
+                            runThreeTimes--;
+                        } else {
+                            playerBet = playerBet * 2;
+                            pause(1);
+                            System.out.println("Player bet has been doubled to " + playerBet);
+                            runThreeTimes = 3;
+                        }
+                    }
+                    pause(1);
+                    spacer();
+                    dealCardToPlayer();
+                    spacer();
+                    pause(2);
+                    if(getPlayerSum() > 21) {
+                        checkIfPlayerHasAce();
+                    }
+                    if (getPlayerSum() > 21) {
+                        pause(1);
+                        System.out.println("Your hand reached a value of " + getPlayerSum() + "... You lose!");
+                        dealerWins();
+                        hasSomeoneWon = true;
+                        runThreeTimes = 3;
+                    } else if (getPlayerSum() == 21 && getDealerSum() >= 17) {
+                        pause(1);
+                        System.out.println("You hit 21! Dealer is at 17 or above and cant draw anymore...");
+                        runThreeTimes = 3;
+                    } else if (getPlayerSum() == 21) {
+                        pause(1);
+                        System.out.println("You hit 21! Lets see if the dealer can match it...");
+                        runThreeTimes = 3;
+                    }
+                } else if (playerAnswer.equals("s")) {
+                    runThreeTimes = 3;
+                } else {
+                    runThreeTimes--;
+                }
+                runThreeTimes++;
+            }
+        }
+
+        public void dealersTurn () {
+            int runThreeTimes = 0;
+            while (runThreeTimes <= 3) {
+                pause(1);
+                if(getDealerSum() >= 17) {
+                    runThreeTimes = 3;
+                } else {
+                    pause(2);
+                    spacer();
+                    dealCardToDealer();
+                    spacer();
+                    if(getDealerSum() > 21) {
+                        checkIfDealerHasAce();
+                    }
+                    pause(2);
+                    System.out.println("The Dealers hand has a value of: " + getDealerSum());
+                }
+                pause(1);
+                if (getDealerSum() > 21) {
+                    pause(1);
+                    System.out.println("Dealer Busted! You win!");
+                    playerWins();
+                    runThreeTimes = 3;
+                } else if (getDealerSum() >= 17) {
+                    if (getDealerSum() == getPlayerSum()) {
+                        pause(1);
+                        System.out.println("Its a tie!");
+                        itsATie();
+                        runThreeTimes = 3;
+                    } else if (getDealerSum() > getPlayerSum()) {
+                        pause(1);
+                        System.out.println("You lose! Dealers hand was " + getDealerSum() + ". Against your hand of " + getPlayerSum() + ".");
+                        dealerWins();
+                        runThreeTimes = 3;
+                    } else {
+                        pause(1);
+                        System.out.println("You win! Your hand was " + getPlayerSum() + ". Against the Dealers hand of " + getDealerSum() + ".");
+                        playerWins();
+                        runThreeTimes = 3;
+                    }
+                }
+                runThreeTimes++;
+            }
+            if (numOfDealerCards == 5 && getDealerSum() < 21) {
+                System.out.println("Dealer won by the 5-card-rule!");
+                dealerWins();
+            }
+        }
+
+
+    public int getPlayerSum () {
+            int playerHandTotal = 0;
+            for (int i = 0; i < playerHand.size(); i++) {
+                playerHandTotal = playerHandTotal + playerHand.get(i);
+            }
+            return playerHandTotal;
+        }
+
+        public int getDealerSum () {
+            int dealerHandTotal = 0;
+            for (int i = 0; i < dealerHand.size(); i++) {
+                dealerHandTotal = dealerHandTotal + dealerHand.get(i);
+            }
+            return dealerHandTotal;
+        }
+        public void doesAnyoneHaveBlackjack () {
+            if (getDealerSum() == 21) {
+                if (getPlayerSum() == 21) {
+                    System.out.println("Your hand has a value of: " + getPlayerSum());
+                    pause(2);
+                    System.out.println("The Dealers hand has a value of: " + getDealerSum());
+                    pause(2);
+                    System.out.println("Its a draw! Dealer and Player both have Blackjack!");
+                    itsATie();
+                    hasSomeoneWon = true;
+                } else {
+                    System.out.println("Your hand has a value of: " + getPlayerSum());
+                    pause(2);
+                    System.out.println("The Dealers hand has a value of: " + getDealerSum());
+                    pause(2);
+                    System.out.println("Dealer has won by BlackJack!");
+                    dealerWins();
+                    hasSomeoneWon = true;
+                }
+            } else if (getPlayerSum() == 21) {
+                System.out.println("Your hand has a value of: " + getPlayerSum());
+                pause(2);
+                System.out.println("The Dealers hand has a value of: " + getDealerSum());
+                pause(2);
+                System.out.println("You won by BlackJack!");
+                playerWinsByBlackJack();
+                hasSomeoneWon = true;
+            }
+        }
+
+        public int pause (int sleepTime){
+            try {
+                Thread.sleep(sleepTime * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                System.out.println("Error pausing the program");
+            }
+            return 0;
+        }
+
+        public void spacer () {
+            System.out.println("-------------------------------------------------------");
+        }
+
+        public void betAmount() {
+            Scanner betScanner = new Scanner(System.in);
+            boolean isBetGood = false;
+            spacer();
+            System.out.println("Current coin balance: " + (int) playerCoins);
+            while(isBetGood == false) {
+                pause(1);
+                System.out.println("How much do you wish to bet? (No decimals)");
+                playerBet = betScanner.nextInt();
+                playerBetDouble = playerBet;
+                if (playerBet > playerCoins) {
+                    pause(1);
+                    System.out.println("Can't bet more than you own!");
+                } else if (playerBet < 10) {
+                    pause(1);
+                    System.out.println("You have to bet atleast 10 coins!");
+                } else {
+                    spacer();
+                    System.out.println("You've bet: " + playerBet + " Coins");
+                    isBetGood = true;
+                }
+            }
+        }
+
+        public boolean doesPlayerHaveEnough() {
+            boolean enoughBalance;
+            if (playerCoins < 10) {
+                enoughBalance = false;
+            } else {
+                enoughBalance = true;
+            }
+            return enoughBalance;
+        }
+
+        public void playerWins() {
+            pause(1);
+            System.out.println(playerBet + " Coins has been added to your balance for winning!");
+            playerCoins = playerCoins + playerBet;
+        }
+        public void dealerWins() {
+            pause(2);
+            System.out.println(playerBet + " Coins has been deducted from your balance for losing.");
+            playerCoins = playerCoins - playerBet;
+        }
+
+        public void playerWinsByBlackJack() {
+            pause(2);
+            System.out.println((playerBet * 1.5) + " Coins has been added to your balance for winning by BlackJack!");
+            playerCoins = playerCoins + (playerBetDouble * 1.5);
+        }
+
+        public void itsATie() {
+            pause(2);
+            System.out.println(playerBet + " has been returned to your balance due to a tie.");
+        }
+        public void checkIfPlayerHasAce() {
+            for (int i = 0; i < playerHand.size(); i++) {
+                if(playerHand.get(i).equals(11)) {
+                    playerHand.set(i,1);
+                    i = 99;
+                }
+            }
+        }
+    public void checkIfDealerHasAce() {
+        for (int i = 0; i < dealerHand.size(); i++) {
+            if(dealerHand.get(i).equals(11)) {
+                dealerHand.set(i,1);
+                i = 99;
+            }
+        }
+    }
+}
